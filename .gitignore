@@ -1,0 +1,4 @@
+*sams.egg-info
+*.pyc
+*.sqlite
+*dev.ini
