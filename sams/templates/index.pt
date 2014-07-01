@@ -54,7 +54,7 @@
                 <div class="col-md-4">
                     <h2>TV Display</h2>
                     <p>See the most up to date information of the state of your environment on a page that is formatted for the big screen.</p>
-                    <p><a class="btn btn-default" href="#" role="button">Go To SAMS &raquo;</a></p>
+                    <p><a class="btn btn-default" href="/sams" role="button">Go To SAMS &raquo;</a></p>
                 </div>
                 <div class="col-md-4 text-muted">
                     <h2>Reporting</h2>
