@@ -41,7 +41,7 @@
         </div>
 
         <!-- Main jumbotron for a primary marketing message or call to action -->
-        <div class="jumbotron sams unconfirmed animate">
+        <div class="jumbotron sams up animate">
             <div class="container">
                 <h1>Welcome to SAMS</h1>
                 <p><b>Current Status:</b> Everything is up and running smoothly</p>
@@ -52,19 +52,19 @@
             <!-- Example row of columns -->
             <div class="row">
                 <div class="col-md-4">
-                    <h2>Reporting</h2>
-                    <p>Run reports on data that has been collected right out of Pingdom</p>
-                    <p><a class="btn btn-default" href="#" role="button">Run Reports &raquo;</a></p>
-                </div>
-                <div class="col-md-4">
                     <h2>TV Display</h2>
                     <p>See the most up to date information of the state of your environment on a page that is formatted for the big screen.</p>
                     <p><a class="btn btn-default" href="#" role="button">Go To SAMS &raquo;</a></p>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 text-muted">
+                    <h2>Reporting</h2>
+                    <p>Run reports on data that has been collected right out of Pingdom</p>
+                    <p><a class="btn btn-default disabled" href="#" role="button">Coming Soon</a></p>
+                </div>
+                <div class="col-md-4 text-muted">
                     <h2>Pausing and Unpausing</h2>
                     <p>Pause and unpause multiple checks at a time with ease</p>
-                    <p><a class="btn btn-default" href="#" role="button">Manage Checks &raquo;</a></p>
+                    <p><a class="btn btn-default disabled" href="#" role="button">Coming Soon</a></p>
                 </div>
             </div>
 
