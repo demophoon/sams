@@ -22,6 +22,7 @@ def api_sams(request):
         'name': check.name,
         'hostname': check.hostname,
         'status': check.status,
+        'created': check.created,
     } for check in checks]
 
 
