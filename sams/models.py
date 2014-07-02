@@ -12,7 +12,7 @@ from sqlalchemy.orm import (
     scoped_session,
     sessionmaker,
     relationship,
-    )
+)
 
 from zope.sqlalchemy import ZopeTransactionExtension
 

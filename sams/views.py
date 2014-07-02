@@ -16,7 +16,6 @@ def sams(request):
 @view_config(route_name='api_sams', renderer='json')
 def api_sams(request):
     checks = Pingdom.getChecks()
-    print dir(checks[0])
     return [{
         'id': check.id,
         'name': check.name,

@@ -134,31 +134,40 @@
         <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
 
         <script type="text/javascript" charset="utf-8">
+            var Check = function(id, name, hostname, status) {
+                var me = this;
+                me.id = id;
+                me.name = name;
+                me.hostname = hostname;
+                me.status = ko.observable(status);
+            }
             var viewModel = function() {
                 var me = this;
                 me.checks = ko.observableArray();
                 me.sort_checks = function(status) {
                     return ko.computed(function() {
                         return ko.utils.arrayFilter(me.checks(), function(item) {
-                            return item.status == status;
+                            return item.status() == status;
                         });
                     });
                 }
                 me.up_checks = me.sort_checks("up");
                 me.down_checks = me.sort_checks("down");
-                me.unconfirmed_checks = me.sort_checks("unconfirmed");
+                me.unconfirmed_checks = me.sort_checks("unconfirmed_down");
 
                 me.getChecks = function() {
                     $.ajax({
                         url: '/api/1.0/sams',
                         method: 'GET',
                         success: function(data) {
-                            me.checks(data);
+                            me.checks(ko.utils.arrayMap(data, function(item) {
+                                return new Check(item.id, item.name, item.hostname, item.status);
+                            }))
                         },
                     })
                 }
                 me.getChecks();
-                me.timer = setInterval(function() {ViewModel.getChecks()}, 60000);
+                me.timer = setInterval(function() {ViewModel.getChecks()}, 15000);
             }
 
             var ViewModel = new viewModel();
