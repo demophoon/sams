@@ -23,7 +23,7 @@ def main(global_config, **settings):
     config.include('sams.views')
     config.add_static_view('static', 'static', cache_max_age=3600)
 
-    config.add_sockjs_route(prefix='/api/v1/sams/ws', session=ClientNotifier)
+    config.add_sockjs_route(prefix='/api/1.0/sams/ws', session=ClientNotifier)
 
     config.scan()
     return config.make_wsgi_app()

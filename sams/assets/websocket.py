@@ -11,6 +11,7 @@ class ClientNotifier(Session):
 
     def on_open(self):
         self.all_clients.append(self)
+        print self.all_clients
         pass
 
     def on_message(self, message):

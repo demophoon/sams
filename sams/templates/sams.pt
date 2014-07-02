@@ -109,7 +109,7 @@
                 <div id='middle'>
                     <div id='inner'>
                         <div data-bind="foreach: down_checks">
-                            <h1 data-bind="text: name">Everything is down</h1>
+                            <h1 data-bind="text: name"></h1>
                         </div>
                     </div>
                 </div>
@@ -123,7 +123,7 @@
             <div id='outer'>
                 <div id='middle'>
                     <div data-bind="foreach: unconfirmed_checks">
-                        <h1 data-bind="text: name">Everything is down</h1>
+                        <h1 data-bind="text: name"></h1>
                     </div>
                 </div>
             </div>
@@ -132,6 +132,7 @@
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
         <script src="//oss.maxcdn.com/libs/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
+        <script src="//cdn.sockjs.org/sockjs-0.3.min.js"></script>
 
         <script type="text/javascript" charset="utf-8">
             var Check = function(id, name, hostname, status) {
@@ -166,8 +167,29 @@
                         },
                     })
                 }
-                me.getChecks();
-                me.timer = setInterval(function() {ViewModel.getChecks()}, 15000);
+
+                me.sock = null;
+                me.connect_to_sockjs = function() {
+                    me.sock = new SockJS('/api/1.0/sams/ws');
+                    me.sock.onopen = function() {
+                        ViewModel.getChecks();
+                    };
+                    me.sock.onmessage = function(e) {
+                        message = JSON.parse(e.data);
+                        for (var key in message.data) {
+                            check = ko.utils.arrayFirst(ViewModel.checks(), function(item) {
+                                return item.id == key;
+                            });
+                            check.status(message.data[key]);
+                        }
+                    };
+                    me.sock.onclose = function() {
+                        setTimeout(me.connect_to_sockjs, 5000);
+                        sock = null;
+                    };
+                }
+                me.connect_to_sockjs();
+                //me.timer = setInterval(function() {ViewModel.getChecks()}, 15000);
             }
 
             var ViewModel = new viewModel();
