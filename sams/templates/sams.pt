@@ -156,7 +156,10 @@
                 me.down_checks = me.sort_checks("down");
                 me.unconfirmed_checks = me.sort_checks("unconfirmed_down");
 
+                me.last_update = 0;
                 me.getChecks = function() {
+                    if (new Date() - me.last_update < 15000) { return; }
+                    me.last_update = new Date() * 1;
                     $.ajax({
                         url: '/api/1.0/sams',
                         method: 'GET',
@@ -169,9 +172,14 @@
                 }
 
                 me.sock = null;
+                me.timer = null;
+
                 me.connect_to_sockjs = function() {
+                    if (!me.allow_ws) { return; }
                     me.sock = new SockJS('/api/1.0/sams/ws');
                     me.sock.onopen = function() {
+                        console.log("Connected");
+                        clearInterval(me.timer);
                         ViewModel.getChecks();
                     };
                     me.sock.onmessage = function(e) {
@@ -184,12 +192,52 @@
                         }
                     };
                     me.sock.onclose = function() {
-                        setTimeout(me.connect_to_sockjs, 5000);
+                        console.log("Disconnected");
+                        setTimeout(me.upgrade, 5000);
                         sock = null;
                     };
                 }
-                me.connect_to_sockjs();
-                //me.timer = setInterval(function() {ViewModel.getChecks()}, 15000);
+
+                me.window_active = function(e) {
+                    var prevType = $(this).data("prevType");
+                    if (prevType != e.type) {   //  reduce double fire issues
+                        switch (e.type) {
+                            case "blur":
+                                me.fallback();
+                                break;
+                            case "focus":
+                                me.allow_ws = true;
+                                me.upgrade();
+                                break;
+                        }
+                    }
+                    $(this).data("prevType", e.type);
+                }
+
+                me.allow_ws = true;
+
+                me.fallback = function() {
+                    if (me.sock) {
+                        me.allow_ws = false;
+                        me.sock.close();
+                        me.sock = null;
+                        me.timer = setInterval(function() {console.log("Fallback Running"); me.getChecks()}, 15000);
+                    }
+                }
+
+                me.upgrade = function() {
+                    if (me.sock) { return; }
+                    if (me.allow_ws) {
+                        me.connect_to_sockjs();
+                    } else {
+                        me.fallback();
+                    }
+                }
+
+                $(window).on("blur focus", me.window_active);
+
+                me.getChecks();
+                me.upgrade();
             }
 
             var ViewModel = new viewModel();
