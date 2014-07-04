@@ -13,6 +13,11 @@ def sams(request):
     return {}
 
 
+@view_config(route_name='reporting', renderer='templates/reporting.pt')
+def reporting(request):
+    return {}
+
+
 @view_config(route_name='api_sams', renderer='json')
 def api_sams(request):
     checks = Pingdom.getChecks()
@@ -27,6 +32,11 @@ def api_sams(request):
 
 def includeme(config):
     config.include('sams.assets.pingdom')
+
+    # Web Views
     config.add_route('home', '/')
     config.add_route('sams', '/sams')
+    config.add_route('reporting', '/reporting')
+
+    # Api Views
     config.add_route('api_sams', '/api/1.0/sams')

@@ -41,10 +41,10 @@
         </div>
 
         <!-- Main jumbotron for a primary marketing message or call to action -->
-        <div class="jumbotron sams up animate">
+        <div class="jumbotron sams up" data-bind="css: sams_css_class">
             <div class="container">
                 <h1>Welcome to SAMS</h1>
-                <p><b>Current Status:</b> Everything is up and running smoothly</p>
+                <p><b>Current Status:</b> <span data-bind="text: sams_status"></span>
             </div>
         </div>
 
@@ -81,6 +81,14 @@
         <!-- Placed at the end of the document so the pages load faster -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
         <script src="//oss.maxcdn.com/libs/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
+
+        <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
+        <script src="//cdn.sockjs.org/sockjs-0.3.min.js"></script>
+        <script src="${request.static_url('sams:static/sams.js')}" ></script>
+        <script type="text/javascript" charset="utf-8">
+            var ViewModel = new SamsViewModel();
+            ko.applyBindings(ViewModel);
+        </script>
     </body>
 </html>
 

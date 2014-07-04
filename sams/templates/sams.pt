@@ -131,116 +131,13 @@
 
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
         <script src="//oss.maxcdn.com/libs/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
+
         <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
         <script src="//cdn.sockjs.org/sockjs-0.3.min.js"></script>
+        <script src="${request.static_url('sams:static/sams.js')}" ></script>
 
         <script type="text/javascript" charset="utf-8">
-            var Check = function(id, name, hostname, status) {
-                var me = this;
-                me.id = id;
-                me.name = name;
-                me.hostname = hostname;
-                me.status = ko.observable(status);
-            }
-            var viewModel = function() {
-                var me = this;
-                me.checks = ko.observableArray();
-                me.sort_checks = function(status) {
-                    return ko.computed(function() {
-                        return ko.utils.arrayFilter(me.checks(), function(item) {
-                            return item.status() == status;
-                        });
-                    });
-                }
-                me.up_checks = me.sort_checks("up");
-                me.down_checks = me.sort_checks("down");
-                me.unconfirmed_checks = me.sort_checks("unconfirmed_down");
-
-                me.last_update = 0;
-                me.getChecks = function() {
-                    if (new Date() - me.last_update < 15000) { return; }
-                    me.last_update = new Date() * 1;
-                    $.ajax({
-                        url: '/api/1.0/sams',
-                        method: 'GET',
-                        success: function(data) {
-                            me.checks(ko.utils.arrayMap(data, function(item) {
-                                return new Check(item.id, item.name, item.hostname, item.status);
-                            }))
-                        },
-                    })
-                }
-
-                me.sock = null;
-                me.timer = null;
-
-                me.connect_to_sockjs = function() {
-                    if (!me.allow_ws) { return; }
-                    me.sock = new SockJS('/api/1.0/sams/ws');
-                    me.sock.onopen = function() {
-                        console.log("Connected");
-                        clearInterval(me.timer);
-                        ViewModel.getChecks();
-                    };
-                    me.sock.onmessage = function(e) {
-                        message = JSON.parse(e.data);
-                        for (var key in message.data) {
-                            check = ko.utils.arrayFirst(ViewModel.checks(), function(item) {
-                                return item.id == key;
-                            });
-                            check.status(message.data[key]);
-                        }
-                    };
-                    me.sock.onclose = function() {
-                        console.log("Disconnected");
-                        setTimeout(me.upgrade, 5000);
-                        sock = null;
-                    };
-                }
-
-                me.window_active = function(e) {
-                    var prevType = $(this).data("prevType");
-                    if (prevType != e.type) {   //  reduce double fire issues
-                        switch (e.type) {
-                            case "blur":
-                                me.fallback();
-                                break;
-                            case "focus":
-                                me.allow_ws = true;
-                                me.upgrade();
-                                break;
-                        }
-                    }
-                    $(this).data("prevType", e.type);
-                }
-
-                me.allow_ws = true;
-
-                me.fallback = function() {
-                    if (me.sock) {
-                        me.allow_ws = false;
-                        me.sock.close();
-                        me.sock = null;
-                        me.timer = setInterval(function() {console.log("Fallback Running"); me.getChecks()}, 15000);
-                    }
-                }
-
-                me.upgrade = function() {
-                    if (me.sock) { return; }
-                    if (me.allow_ws) {
-                        me.connect_to_sockjs();
-                    } else {
-                        me.fallback();
-                    }
-                }
-
-                $(window).on("blur focus", me.window_active);
-
-                me.getChecks();
-                me.upgrade();
-            }
-
-            var ViewModel = new viewModel();
+            var ViewModel = new SamsViewModel();
             ko.applyBindings(ViewModel);
         </script>
 
