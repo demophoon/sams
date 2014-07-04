@@ -4,9 +4,12 @@ from sqlalchemy import (
     Text,
     DateTime,
     ForeignKey,
+    and_,
+    or_,
 )
 
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_method, hybrid_property
 
 from sqlalchemy.orm import (
     scoped_session,
@@ -41,3 +44,21 @@ class Outage(Base):
     start = Column(DateTime)
     end = Column(DateTime)
     updated_at = Column(DateTime)
+
+    @hybrid_method
+    def between(self, start, end):
+        return or_(
+            and_(Outage.start >= start, Outage.start <= end),
+            and_(Outage.end >= start, Outage.end <= end)
+            , and_(Outage.start <= start, Outage.end >= end)
+        )
+
+    @hybrid_property
+    def duration(self):
+        return Outage.end - Outage.start
+
+
+class Tag(Base):
+    __tablename__ = 'tag'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text)
