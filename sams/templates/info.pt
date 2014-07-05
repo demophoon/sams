@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="${request.locale_name}">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="pyramid web application">
+        <meta name="author" content="Britt Gresham">
+        <link rel="shortcut icon" href="${request.static_url('sams:static/pyramid-16x16.png')}">
+
+        <title>SAMS - Server Information</title>
+
+        <link href="//oss.maxcdn.com/libs/twitter-bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Custom styles for this scaffold -->
+        <link href="${request.static_url('sams:static/homepage.css')}" rel="stylesheet">
+        <link href="${request.static_url('sams:static/sams.css')}" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+        <script src="//oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="//oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        <style type="text/css" media="screen">
+            body {
+                padding-top: 75px;
+            }
+        </style>
+
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">SAMS</a>
+                </div>
+                <div class="navbar-collapse collapse">
+                </div><!--/.navbar-collapse -->
+            </div>
+        </div>
+
+        <div class='container'>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th colspan=2>Workers</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="col-sm-3">Pingdom Worker</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td class="col-sm-3">Reporting Worker</td>
+                        <td>
+                            <div class="progress">
+                                <div id="percent_bar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+                    <script src="//oss.maxcdn.com/libs/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
+
+                    <script type="text/javascript" charset="utf-8">
+                        var known_percentage = 0;
+                        var current_percent = 0;
+                        var percent_rate = 0;
+                        var current_check = "";
+                        var current_state = "unknown";
+                        var last_sleep = 0;
+                        var sleep_time = 0;
+
+                        var last_update = new Date() * 1;
+
+                        function duration(seconds) {
+                            if (seconds < 60) {
+                                return ~~seconds + "s";
+                            } else if (seconds >= 60 && seconds < 3600) {
+                                return ~~(seconds / 60) + "m " + duration(seconds % 60);
+                            }
+                        }
+
+                        function updatePercent() {
+                            percent_of_update = ((new Date() * 1) - last_update) / 1000;
+                            last_update = new Date() * 1;
+                            var prate = percent_rate * percent_of_update;
+                            if (current_percent > known_percentage) {
+                                known_percentage += prate;
+                            } else if (current_percent < known_percentage) {
+                                current_percent = known_percentage;
+                            } else {
+                                current_percent += prate;
+                                known_percentage += prate;
+                            }
+                            current_percent = Math.min(current_percent, 1);
+                            known_percentage = Math.min(known_percentage, 1);
+                            current_check_str = current_state;
+                            if (current_state == 'running') {
+                                current_check_str = "Working on \"" + current_check + "\""
+                            } else if (current_state == 'sleeping') {
+                                current_check_str = "Sleeping. Next run in " + duration((last_sleep + sleep_time - (new Date() * 1)) / 1000);
+                            }
+                            $("#percent_bar").attr("aria-valuenow", current_percent * 100);
+                            $("#percent_bar").width(current_percent * 100 + "%");
+                            $("#percent_bar").html(~~(current_percent * 1000) / 10 + "% &mdash; " + current_check_str);
+                        }
+
+                        setInterval(updatePercent, 100);
+
+                        function update_percentage() {
+                            $.ajax({
+                                url: "/api/1.0/test",
+                                cache: false,
+                                success: function(data) {
+                                    console.log(data);
+                                    if (known_percentage == 1.0) {
+                                        current_percent = data.reporting_worker.percent;
+                                    }
+                                    known_percentage = data.reporting_worker.percent;
+                                    percent_rate = data.reporting_worker.percent_rate;
+                                    current_check = data.reporting_worker.current_check;
+                                    current_state = data.reporting_worker.state
+                                    last_sleep = data.reporting_worker.last_sleep * 1000;
+                                    sleep_time = data.reporting_worker.sleep_time * 1000;
+                                }
+                            });
+                        }
+                        update_percentage()
+                        setInterval(update_percentage, 5000);
+                    </script>
+                </tbody>
+            </table>
+            <hr>
+
+            <footer>
+            <p>&copy; Britt Gresham 2014</p>
+            </footer>
+        </div>
+
+    </body>
+</html>

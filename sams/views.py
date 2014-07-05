@@ -1,6 +1,8 @@
+from calendar import timegm
 from pyramid.view import view_config
 
 from .assets import pingdom as Pingdom
+
 
 
 @view_config(route_name='home', renderer='templates/index.pt')
@@ -16,6 +18,25 @@ def sams(request):
 @view_config(route_name='reporting', renderer='templates/reporting.pt')
 def reporting(request):
     return {}
+
+
+@view_config(route_name='info', renderer='templates/info.pt')
+def info(request):
+    return {}
+
+
+@view_config(route_name='test', renderer='json')
+def test(request):
+    return {
+        "reporting_worker": {
+            "state": Pingdom.workers["Reporting Worker"].state,
+            "percent": Pingdom.workers["Reporting Worker"].percent,
+            "percent_rate": Pingdom.workers["Reporting Worker"].percent_rate,
+            "current_check": Pingdom.workers["Reporting Worker"].current_check.name,
+            "last_sleep": timegm(Pingdom.workers["Reporting Worker"].last_sleep.utctimetuple()),
+            "sleep_time": Pingdom.workers["Reporting Worker"].sleep_time,
+        }
+    }
 
 
 @view_config(route_name='api_sams', renderer='json')
@@ -37,6 +58,8 @@ def includeme(config):
     config.add_route('home', '/')
     config.add_route('sams', '/sams')
     config.add_route('reporting', '/reporting')
+    config.add_route('info', '/info')
 
     # Api Views
     config.add_route('api_sams', '/api/1.0/sams')
+    config.add_route('test', '/api/1.0/test')

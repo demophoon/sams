@@ -21,7 +21,7 @@ from sams.models import (
 
 logger = logging.getLogger(__name__)
 Pingdom = None
-workers = []
+workers = {}
 
 
 @cache_region("1m")
@@ -123,13 +123,26 @@ class _getOutageInformationWorker(Greenlet):
 
     def __init__(self, sleep_time=900):
         self.sleep_time = sleep_time
+        self.state = "initialization"
+        self.percent = 0.0
+        self.percent_rate = 0.0
+        self.last_percentage_update = datetime.utcnow()
+        self.last_sleep = datetime.utcnow()
+        self.current_check = None
         Greenlet.__init__(self)
 
     def fetch_information(self):
         with transaction.manager:
             api_checks = {x.id: x for x in getChecks()}
             checks = DBSession.query(Check).all()
-            for check in checks:
+            total_checks = len(checks)
+            for index, check in enumerate(checks):
+                percentage_delta = (float(index) / float(total_checks)) - self.percent
+                time_delta = datetime.utcnow() - self.last_percentage_update
+                self.percent_rate = percentage_delta / time_delta.total_seconds()
+                self.percent = float(index) / float(total_checks)
+                self.last_percentage_update = datetime.utcnow()
+                self.current_check = check
                 logging.info("Fetching Historical Data for " + check.name)
                 latest = DBSession.query(Outage).filter(
                     Outage.check_id == check.id
@@ -144,6 +157,8 @@ class _getOutageInformationWorker(Greenlet):
                 time_to = int(calendar.timegm(datetime.utcnow().utctimetuple()))
                 params = {"from": time_from, "to": time_to}
                 api_check = api_checks.get(check.id)
+                if not api_check:
+                    continue
                 updates = []
                 outages = api_check.outages(**params)
                 for outage in outages:
@@ -157,13 +172,18 @@ class _getOutageInformationWorker(Greenlet):
                 if updates:
                     DBSession.add_all(updates)
                     DBSession.flush()
+            self.percent = 1.0
+            self.percent_rate = 0.0
 
     def _run(self):
         while True:
+            self.state = "running"
             try:
                 self.fetch_information()
             except Exception as e:
                 logger.warn(e)
+            self.state = "sleeping"
+            self.last_sleep = datetime.utcnow()
             gevent.sleep(self.sleep_time)
 
 
@@ -179,5 +199,5 @@ def includeme(config):
         settings.get("pingdom_password"),
         settings.get("pingdom_key"),
     )
-    workers.append(_getChecksWorker.spawn())
-    workers.append(_getOutageInformationWorker.spawn())
+    workers['Pingdom Worker'] = _getChecksWorker.spawn()
+    workers['Reporting Worker'] = _getOutageInformationWorker.spawn()
