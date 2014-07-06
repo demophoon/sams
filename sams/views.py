@@ -4,7 +4,6 @@ from pyramid.view import view_config
 from .assets import pingdom as Pingdom
 
 
-
 @view_config(route_name='home', renderer='templates/index.pt')
 def home(request):
     return {}
@@ -25,14 +24,18 @@ def info(request):
     return {}
 
 
-@view_config(route_name='test', renderer='json')
-def test(request):
+@view_config(route_name='worker_info', renderer='json')
+def worker_info(request):
     return {
+        "pingdom_worker": {
+            "last_update": timegm(Pingdom.workers["Pingdom Worker"].last_update.utctimetuple()),
+            "sleep_time": Pingdom.workers["Pingdom Worker"].sleep_time,
+        },
         "reporting_worker": {
             "state": Pingdom.workers["Reporting Worker"].state,
             "percent": Pingdom.workers["Reporting Worker"].percent,
             "percent_rate": Pingdom.workers["Reporting Worker"].percent_rate,
-            "current_check": Pingdom.workers["Reporting Worker"].current_check.name,
+            "current_check": Pingdom.workers["Reporting Worker"].current_check,
             "last_sleep": timegm(Pingdom.workers["Reporting Worker"].last_sleep.utctimetuple()),
             "sleep_time": Pingdom.workers["Reporting Worker"].sleep_time,
         }
@@ -62,4 +65,4 @@ def includeme(config):
 
     # Api Views
     config.add_route('api_sams', '/api/1.0/sams')
-    config.add_route('test', '/api/1.0/test')
+    config.add_route('worker_info', '/api/1.0/workers')

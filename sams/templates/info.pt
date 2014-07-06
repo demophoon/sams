@@ -57,90 +57,108 @@
                 <tbody>
                     <tr>
                         <td class="col-sm-3">Pingdom Worker</td>
-                        <td></td>
+                        <td data-bind="text: ~~(next_pingdom_count() / 1000) + ' seconds'"></td>
                     </tr>
                     <tr>
                         <td class="col-sm-3">Reporting Worker</td>
                         <td>
                             <div class="progress">
-                                <div id="percent_bar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;"></div>
+                                <div data-bind="attr: {'aria-valuenow': display_percentage}, text: status_string, style: {width: display_percentage() + '%'}" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                         </td>
                     </tr>
 
-                    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-                    <script src="//oss.maxcdn.com/libs/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
-
-                    <script type="text/javascript" charset="utf-8">
-                        var known_percentage = 0;
-                        var current_percent = 0;
-                        var percent_rate = 0;
-                        var current_check = "";
-                        var current_state = "unknown";
-                        var last_sleep = 0;
-                        var sleep_time = 0;
-
-                        var last_update = new Date() * 1;
-
-                        function duration(seconds) {
-                            if (seconds < 60) {
-                                return ~~seconds + "s";
-                            } else if (seconds >= 60 && seconds < 3600) {
-                                return ~~(seconds / 60) + "m " + duration(seconds % 60);
-                            }
-                        }
-
-                        function updatePercent() {
-                            percent_of_update = ((new Date() * 1) - last_update) / 1000;
-                            last_update = new Date() * 1;
-                            var prate = percent_rate * percent_of_update;
-                            if (current_percent > known_percentage) {
-                                known_percentage += prate;
-                            } else if (current_percent < known_percentage) {
-                                current_percent = known_percentage;
-                            } else {
-                                current_percent += prate;
-                                known_percentage += prate;
-                            }
-                            current_percent = Math.min(current_percent, 1);
-                            known_percentage = Math.min(known_percentage, 1);
-                            current_check_str = current_state;
-                            if (current_state == 'running') {
-                                current_check_str = "Working on \"" + current_check + "\""
-                            } else if (current_state == 'sleeping') {
-                                current_check_str = "Sleeping. Next run in " + duration((last_sleep + sleep_time - (new Date() * 1)) / 1000);
-                            }
-                            $("#percent_bar").attr("aria-valuenow", current_percent * 100);
-                            $("#percent_bar").width(current_percent * 100 + "%");
-                            $("#percent_bar").html(~~(current_percent * 1000) / 10 + "% &mdash; " + current_check_str);
-                        }
-
-                        setInterval(updatePercent, 100);
-
-                        function update_percentage() {
-                            $.ajax({
-                                url: "/api/1.0/test",
-                                cache: false,
-                                success: function(data) {
-                                    console.log(data);
-                                    if (known_percentage == 1.0) {
-                                        current_percent = data.reporting_worker.percent;
-                                    }
-                                    known_percentage = data.reporting_worker.percent;
-                                    percent_rate = data.reporting_worker.percent_rate;
-                                    current_check = data.reporting_worker.current_check;
-                                    current_state = data.reporting_worker.state
-                                    last_sleep = data.reporting_worker.last_sleep * 1000;
-                                    sleep_time = data.reporting_worker.sleep_time * 1000;
-                                }
-                            });
-                        }
-                        update_percentage()
-                        setInterval(update_percentage, 5000);
-                    </script>
                 </tbody>
             </table>
             <hr>
+
+            <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
+            <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+            <script src="//oss.maxcdn.com/libs/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
+
+            <script type="text/javascript" charset="utf-8">
+                var now = function() {
+                    var n = new Date();
+                    return new Date(n.getTime() + n.getTimezoneOffset() * 60000) * 1;
+                    return new Date() * 1;
+                }
+
+                var duration = function(seconds) {
+                    if (seconds < 60) {
+                        return ~~seconds + "s";
+                    } else if (seconds >= 60 && seconds < 3600) {
+                        return ~~(seconds / 60) + "m " + duration(seconds % 60);
+                    }
+                }
+
+                var viewModel = function() {
+                    var me = this;
+                    me.percent = ko.observable(0);
+                    me.known_percent = ko.observable(0);
+                    me.pps = ko.observable(0);
+                    me.last_state = ko.observable(null);
+                    me.status_string = ko.computed(function() {
+                        if (me.last_state()) {
+                            return me.last_state().reporting_worker.state + " - " + me.display_percentage() + "%"
+                        }
+                        return "";
+                    });
+                    me.last_pingdom_update = ko.observable();
+                    me.pingdom_sleep_time = ko.observable(0);
+                    me.next_pingdom_count = ko.observable(0);
+                    me.last_update = now();
+
+                    me.display_percentage = ko.computed(function() {
+                        return ~~(me.percent() * 1000) / 10
+                    });
+
+                    me.update_function = function() {
+                        $.ajax({
+                            url: "/api/1.0/workers",
+                            cache: false,
+                            success: function(data) {
+                                if (data.reporting_worker.percent > me.percent() || data.reporting_worker.state != me.last_state().reporting_worker.state) {
+                                    me.percent(data.reporting_worker.percent);
+                                }
+                                me.known_percent(data.reporting_worker.percent);
+                                me.pps(data.reporting_worker.percent_rate);
+                                me.last_pingdom_update(data.pingdom_worker.last_update);
+                                me.pingdom_sleep_time(data.pingdom_worker.sleep_time);
+                                me.last_state(data);
+                            }
+                        });
+                    }
+
+                    me.update_function(me);
+
+                    me.timer = setInterval(function() { me.update_function(me) }, 15000);
+
+                    me.last_update = now();
+                    me.update_percent = function() {
+                        percent_of_update = (now() - me.last_update) / 1000;
+                        var prate = me.pps() * percent_of_update;
+                        if (me.known_percent)
+                        if (me.percent() + prate > 1) {
+                            me.percent(1);
+                        } else {
+                            if (me.known_percent() > me.percent()) {
+                                me.percent(me.percent() + prate);
+                            }
+                            me.known_percent(me.known_percent() + prate);
+                        }
+                        var count = (new Date((me.last_pingdom_update() + me.pingdom_sleep_time()) * 1000) - (new Date() * 1));
+                        count %= (me.pingdom_sleep_time() * 1000);
+                        while (count < 0) {
+                            count += (me.pingdom_sleep_time() + 1) * 1000;
+                        }
+                        me.next_pingdom_count(count);
+                        me.last_update = now();
+                    }
+                    me.update_timer = setInterval(me.update_percent, 100);
+                }
+                var ViewModel = new viewModel();
+                ko.applyBindings(ViewModel);
+            </script>
 
             <footer>
             <p>&copy; Britt Gresham 2014</p>

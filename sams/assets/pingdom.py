@@ -57,7 +57,9 @@ class _getChecksWorker(Greenlet):
     instead of all the clients coming to us for status updates every minute.
     """
 
-    def __init__(self):
+    def __init__(self, sleep_time=15):
+        self.sleep_time = sleep_time
+        self.last_update = datetime.utcnow()
         self.previous_state = {x.id: x for x in Pingdom.getChecks()}
         Greenlet.__init__(self)
 
@@ -110,7 +112,8 @@ class _getChecksWorker(Greenlet):
                 self.fetch_information()
             except Exception as e:
                 logger.warn(e)
-            gevent.sleep(15)
+            self.last_update = datetime.utcnow()
+            gevent.sleep(self.sleep_time)
 
 
 class _getOutageInformationWorker(Greenlet):
@@ -142,7 +145,7 @@ class _getOutageInformationWorker(Greenlet):
                 self.percent_rate = percentage_delta / time_delta.total_seconds()
                 self.percent = float(index) / float(total_checks)
                 self.last_percentage_update = datetime.utcnow()
-                self.current_check = check
+                self.current_check = check.name
                 logging.info("Fetching Historical Data for " + check.name)
                 latest = DBSession.query(Outage).filter(
                     Outage.check_id == check.id
