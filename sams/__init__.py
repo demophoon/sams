@@ -8,6 +8,8 @@ from .models import (
 
 from .assets.websocket import ClientNotifier
 
+version = (0, 0, '0 alpha')
+
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.

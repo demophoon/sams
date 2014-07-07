@@ -1,12 +1,24 @@
 from calendar import timegm
-from pyramid.view import view_config
 
+from pyramid.view import view_config
+from pyramid.renderers import get_renderer
+
+from sams import version
 from .assets import pingdom as Pingdom
+
+
+def layout():
+    renderer = get_renderer('templates/main.pt')
+    layout = renderer.implementation().macros['layout']
+    return layout
 
 
 @view_config(route_name='home', renderer='templates/index.pt')
 def home(request):
-    return {}
+    return {
+        'layout': layout(),
+        'title': 'Home',
+    }
 
 
 @view_config(route_name='sams', renderer='templates/sams.pt')
@@ -16,12 +28,19 @@ def sams(request):
 
 @view_config(route_name='reporting', renderer='templates/reporting.pt')
 def reporting(request):
-    return {}
+    return {
+        'layout': layout(),
+        'title': 'Reporting',
+    }
 
 
 @view_config(route_name='info', renderer='templates/info.pt')
 def info(request):
-    return {}
+    return {
+        'layout': layout(),
+        'title': 'Reporting',
+        'version': version,
+    }
 
 
 @view_config(route_name='worker_info', renderer='json')
