@@ -92,7 +92,8 @@ class ApiViews(RequestHandler):
         end = datetime(2014, 7, 7)
         outages = DBSession.query(Outage).join(Check).filter(
             Outage.between(start, end)
-        ).all()
+        )
+        outages = outages.all()
         print outages
         grouped_outages = {x.check_id: [] for x in outages}
         for outage in outages:

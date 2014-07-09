@@ -146,23 +146,32 @@ class _getOutageInformationWorker(Greenlet):
                 self.percent = float(index) / float(total_checks)
                 self.last_percentage_update = datetime.utcnow()
                 self.current_check = check.name
+                updates = []
                 logging.info("Fetching Historical Data for " + check.name)
                 latest = DBSession.query(Outage).filter(
                     Outage.check_id == check.id
                 ).order_by(Outage.end.desc()).first()
                 if latest:
-                    time_from = int(calendar.timegm(latest.start.utctimetuple()))
+                    time_from = int(calendar.timegm(latest.end.utctimetuple()))
                     DBSession.delete(latest)
                 else:
                     time_from = calendar.timegm(check.created_at.utctimetuple())
-                if calendar.timegm(datetime.utcnow().utctimetuple()) - time_from < self.sleep_time:
+                    updates.append(
+                        Outage(
+                            check_id=check.id,
+                            start=datetime.utcfromtimestamp(0),
+                            end=check.created_at,
+                            status='unknown',
+                            updated_at=datetime.utcnow(),
+                        )
+                    )
+                if calendar.timegm(datetime.utcnow().utctimetuple()) - time_from < self.sleep_time * 2:
                     continue
                 time_to = int(calendar.timegm(datetime.utcnow().utctimetuple()))
                 params = {"from": time_from, "to": time_to}
                 api_check = api_checks.get(check.id)
                 if not api_check:
                     continue
-                updates = []
                 outages = api_check.outages(**params)
                 for outage in outages:
                     updates.append(Outage(
@@ -173,6 +182,7 @@ class _getOutageInformationWorker(Greenlet):
                         updated_at=datetime.utcnow(),
                     ))
                 if updates:
+                    logger.info("%d rows added." % (len(updates)))
                     DBSession.add_all(updates)
                     DBSession.flush()
             self.percent = 1.0
