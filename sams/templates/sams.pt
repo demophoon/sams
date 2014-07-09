@@ -12,8 +12,8 @@
 
         <link href="//oss.maxcdn.com/libs/twitter-bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
         <!-- Custom styles for this scaffold -->
-        <link href="${request.static_url('sams:static/homepage.css')}" rel="stylesheet">
-        <link href="${request.static_url('sams:static/sams.css')}" rel="stylesheet">
+        <link href="${request.static_url('sams:static/css/homepage.css')}" rel="stylesheet">
+        <link href="${request.static_url('sams:static/css/sams.css')}" rel="stylesheet">
 
         <style type="text/css" media="screen">
             html, body {
@@ -134,7 +134,7 @@
 
         <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
         <script src="//cdn.sockjs.org/sockjs-0.3.min.js"></script>
-        <script src="${request.static_url('sams:static/sams.js')}" ></script>
+        <script src="${request.static_url('sams:static/js/sams.js')}" ></script>
 
         <script type="text/javascript" charset="utf-8">
             var ViewModel = new SamsViewModel();

@@ -1,12 +1,118 @@
 <div metal:use-macro="layout">
     <div metal:fill-slot="content">
         <div class='container'>
-            To do
-            <hr>
 
-            <footer>
-            <p>&copy; Britt Gresham 2014</p>
-            </footer>
+            <link href="${request.static_url('sams:static/css/daterangepicker-bs3.css')}" rel="stylesheet">
+
+            <script src="${request.static_url('sams:static/js/moment.min.js')}" ></script>
+            <script src="${request.static_url('sams:static/js/daterangepicker.js')}" ></script>
+            <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
+
+            <!--
+            <div class="form-group">
+                <label for="date_range">Date range</label>
+                <div class="input-group">
+                    <div class='input-group-addon'><span class="glyphicon glyphicon-calendar"></span></div>
+                    <input type="text" class="form-control" id="date_range">
+                </div>
+            </div>
+            -->
+
+            <div class='row'>
+
+                <div class='col-sm-4'>
+
+                    <div class="form-group">
+                        <label for="date_range">Date range</label>
+                        <input type="text" class="form-control" data-bind="daterange: {startDate: startDate, endDate: endDate}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="check_select">Select Checks</label>
+                        <select class="form-control" multiple size="15" data-bind="options: checks, optionsText: 'name', selectedOptions: selectedChecks">
+                            <option value="id:123">Check 123</option>
+                            <option value="id:124">Check 124</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="check_filter">Filter Selection</label>
+                        <input type="text" id="check_filter" class="form-control">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <script type="text/javascript" charset="utf-8">
+
+                ko.bindingHandlers.daterange = {
+                    init: function(element, valueAccessor) {
+                        console.log(element);
+                        var x = new Date();
+                        var formatter = 'MM/DD/YYYY h:mm:ss A';
+                        var separator = ' - ';
+                        var startDate = moment(moment().add('days', -1).format("YYYY-MM-DD"));
+                        var endDate = moment(moment().add('days', 0).format("YYYY-MM-DD"));
+
+                        $(element).daterangepicker({
+                            format: formatter,
+                            showDropdowns: true,
+                            timePicker: true,
+                            separator: separator,
+                        });
+                        $(element).on('apply.daterangepicker', function(ev, picker) {
+                            valueAccessor().startDate(parseInt(picker.startDate.format("X")));
+                            valueAccessor().endDate(parseInt(picker.endDate.format("X")));
+                        });
+
+                        $(element).data('daterangepicker').setStartDate(startDate);
+                        $(element).data('daterangepicker').setEndDate(endDate);
+                        $(element).val(startDate.format(formatter) + separator + endDate.format(formatter));
+                    },
+                    update: function(element, valueAccessor) {
+                        console.log(valueAccessor());
+                    }
+                };
+
+                $("#date_range")
+                var CheckModel = function() {
+                    var me = this;
+                    me.name = ko.observable();
+                    me.id = ko.observable();
+                }
+
+                var ReportingViewModel = function() {
+                    var me = this;
+                    me.checks = ko.observableArray();
+                    me.selectedChecks = ko.observableArray();
+
+                    me.startDate = ko.observable();
+                    me.endDate = ko.observable();
+
+                    me.init = function() {
+                        me.getChecks();
+                    }
+                    me.getChecks = function() {
+                        $.ajax({
+                            url: '/api/1.0/checks',
+                            success: function(data) {
+                            me.checks(ko.utils.arrayMap(data, function(item) {
+                                var check = new CheckModel();
+                                check.id(item.id);
+                                check.name(item.name);
+                                return check;
+                            }));
+                            },
+                        });
+                    }
+                    me.init();
+                }
+                var ViewModel = new ReportingViewModel();
+                ko.applyBindings(ViewModel);
+            </script>
+            
+
         </div>
     </div>
 </div>

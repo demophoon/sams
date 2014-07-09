@@ -17,7 +17,7 @@ requires = [
     'transaction',
     'zope.sqlalchemy',
     'waitress',
-    'pingdomlib',
+    'pingdomlib==1.5',
     'gevent',
     'gevent-websocket==0.3.6',
     'pyramid_beaker',

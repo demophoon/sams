@@ -1,8 +1,8 @@
 <div metal:use-macro="layout">
     <div metal:fill-slot="content">
 
-        <link href="${request.static_url('sams:static/homepage.css')}" rel="stylesheet">
-        <link href="${request.static_url('sams:static/sams.css')}" rel="stylesheet">
+        <link href="${request.static_url('sams:static/css/homepage.css')}" rel="stylesheet">
+        <link href="${request.static_url('sams:static/css/sams.css')}" rel="stylesheet">
 
         <!-- Main jumbotron for a primary marketing message or call to action -->
         <div class="jumbotron sams up" data-bind="css: sams_css_class">
@@ -34,7 +34,7 @@
 
             <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
             <script src="//cdn.sockjs.org/sockjs-0.3.min.js"></script>
-            <script src="${request.static_url('sams:static/sams.js')}" ></script>
+            <script src="${request.static_url('sams:static/js/sams.js')}" ></script>
             <script type="text/javascript" charset="utf-8">
                 var ViewModel = new SamsViewModel();
                 ko.applyBindings(ViewModel);
