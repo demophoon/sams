@@ -147,7 +147,12 @@ class _getOutageInformationWorker(Greenlet):
                 self.last_percentage_update = datetime.utcnow()
                 self.current_check = check.name
                 updates = []
-                logging.info("Fetching Historical Data for " + check.name)
+                logging.info("Fetching Historical Data for %s (%d/%d) -- %10.2f" % (
+                    check.name,
+                    index,
+                    total_checks,
+                    int(self.percent * 1000) / 10.0,
+                ))
                 latest = DBSession.query(Outage).filter(
                     Outage.check_id == check.id
                 ).order_by(Outage.end.desc()).first()
@@ -195,6 +200,7 @@ class _getOutageInformationWorker(Greenlet):
                 self.fetch_information()
             except Exception as e:
                 logger.warn(e)
+            transaction.commit()
             self.state = "sleeping"
             self.last_sleep = datetime.utcnow()
             gevent.sleep(self.sleep_time)

@@ -76,7 +76,7 @@ class ApiViews(RequestHandler):
         } for x in checks]
 
     @view_config(route_name='api_sams')
-    def sams(request):
+    def sams(self):
         checks = Pingdom.getChecks()
         return [{
             'id': check.id,
@@ -87,12 +87,15 @@ class ApiViews(RequestHandler):
         } for check in checks]
 
     @view_config(route_name='api_report')
-    def report(request):
-        start = datetime(2014, 7, 6)
-        end = datetime(2014, 7, 7)
+    def report(self):
+        start = datetime.utcfromtimestamp(float(self.request.POST.get('from')))
+        end = datetime.utcfromtimestamp(float(self.request.POST.get('to')))
+        checks = self.request.POST.getall('check_ids')
         outages = DBSession.query(Outage).join(Check).filter(
             Outage.between(start, end)
         )
+        if checks:
+            outages = outages.filter(Check.id.in_(checks))
         outages = outages.all()
         print outages
         grouped_outages = {x.check_id: [] for x in outages}

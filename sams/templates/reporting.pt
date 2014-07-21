@@ -2,11 +2,13 @@
     <div metal:fill-slot="content">
         <div class='container'>
 
+            <link href="${request.static_url('sams:static/css/sams.css')}" rel="stylesheet">
             <link href="${request.static_url('sams:static/css/daterangepicker-bs3.css')}" rel="stylesheet">
 
             <script src="${request.static_url('sams:static/js/moment.min.js')}" ></script>
             <script src="${request.static_url('sams:static/js/daterangepicker.js')}" ></script>
             <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
+            <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/0.2.0/Chart.min.js"></script>
 
             <!--
             <div class="form-group">
@@ -30,8 +32,6 @@
                     <div class="form-group">
                         <label for="check_select">Select Checks</label>
                         <select class="form-control" multiple size="15" data-bind="options: checks, optionsText: 'name', selectedOptions: selectedChecks">
-                            <option value="id:123">Check 123</option>
-                            <option value="id:124">Check 124</option>
                         </select>
                     </div>
 
@@ -40,20 +40,72 @@
                         <input type="text" id="check_filter" class="form-control">
                     </div>
 
+                    <div class="form-group">
+                        <button data-bind="click: runReport" type="submit" class="btn btn-primary">Run Report</button>
+                    </div>
+
+                </div>
+
+                <div class='col-sm-7 table-responsive'>
+
+                    <table class="table table-condensed">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Duration</th>
+                            </tr>
+                        </thead>
+                        <!-- ko foreach: report -->
+                            <thead>
+                                <tr>
+                                    <td colspan="4" data-bind="text: check.name"></td>
+                                </tr>
+                            </thead>
+                            <tbody data-bind="foreach: outages">
+                                <tr>
+                                    <td data-bind="text: status, attr: {class: status}"></td>
+                                    <td data-bind="text: start.format('M/D/YYYY h:mm:ss A')"></td>
+                                    <td data-bind="text: end.format('M/D/YYYY h:mm:ss A')"></td>
+                                    <td data-bind="text: duration"></td>
+                                </tr>
+                            </tbody>
+                        <!-- /ko -->
+                    </table>
+
                 </div>
 
             </div>
 
             <script type="text/javascript" charset="utf-8">
 
+                var duration = function(seconds) {
+                    if (seconds < 60) {
+                        if (seconds > 0) {
+                            return ~~seconds + "s";
+                        } else {
+                            return "";
+                        }
+                    } else if (seconds >= 60 && seconds < 3600) {
+                        return ~~(seconds / 60) + "m " + duration(seconds % 60);
+                    } else if (seconds >= 3600 && seconds < 86400) {
+                        return ~~(seconds / 3600) + "h " + duration(seconds % 3600);
+                    } else {
+                        return ~~(seconds / 86400) + "d " + duration(seconds % 86400);
+                    }
+                }
+
                 ko.bindingHandlers.daterange = {
                     init: function(element, valueAccessor) {
-                        console.log(element);
                         var x = new Date();
                         var formatter = 'MM/DD/YYYY h:mm:ss A';
                         var separator = ' - ';
                         var startDate = moment(moment().add('days', -1).format("YYYY-MM-DD"));
                         var endDate = moment(moment().add('days', 0).format("YYYY-MM-DD"));
+
+                        valueAccessor().startDate(parseInt(startDate.format("X")));
+                        valueAccessor().endDate(parseInt(endDate.format("X")));
 
                         $(element).daterangepicker({
                             format: formatter,
@@ -75,7 +127,6 @@
                     }
                 };
 
-                $("#date_range")
                 var CheckModel = function() {
                     var me = this;
                     me.name = ko.observable();
@@ -84,11 +135,58 @@
 
                 var ReportingViewModel = function() {
                     var me = this;
+                    me.report = ko.observableArray();
+
                     me.checks = ko.observableArray();
                     me.selectedChecks = ko.observableArray();
+                    me.smartSelectedChecks = ko.computed(function() {
+                        if (me.selectedChecks().length > 0) {
+                            return me.selectedChecks();
+                        }
+                        return me.checks();
+                    });
 
                     me.startDate = ko.observable();
                     me.endDate = ko.observable();
+
+                    me.runReport = function() {
+                        console.log(~~(me.startDate()));
+                        console.log(~~(me.endDate()));
+                        console.log(me.smartSelectedChecks());
+                        $.ajax({
+                            url: '/api/1.0/report',
+                            method: 'POST',
+                            data: {
+                                from: me.startDate,
+                                to: me.endDate,
+                                check_ids: ko.utils.arrayMap(
+                                    me.smartSelectedChecks(),
+                                    function(item) {
+                                        return item.id();
+                                    }
+                                ),
+                            },
+                            success: function(data) {
+                                //console.log(data);
+                                ret = []
+                                for (check in data) {
+                                    ret.push({
+                                        check: ko.utils.arrayFirst(me.checks(), function(item){
+                                            return item.id() == check;
+                                        }),
+                                        outages: ko.utils.arrayMap(data[check], function(item) {
+                                            item.duration = duration(item.end - item.start);
+                                            item.start = moment(item.start * 1000);
+                                            item.end = moment(item.end * 1000);
+                                            return item;
+                                        }),
+                                    });
+                                }
+                                me.report(ret);
+                                console.log(ret);
+                            },
+                        });
+                    }
 
                     me.init = function() {
                         me.getChecks();
@@ -111,7 +209,6 @@
                 var ViewModel = new ReportingViewModel();
                 ko.applyBindings(ViewModel);
             </script>
-            
 
         </div>
     </div>
