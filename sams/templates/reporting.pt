@@ -31,13 +31,13 @@
 
                     <div class="form-group">
                         <label for="check_select">Select Checks</label>
-                        <select class="form-control" multiple size="15" data-bind="options: checks, optionsText: 'name', selectedOptions: selectedChecks">
+                        <select class="form-control" multiple size="15" data-bind="options: visibleChecks, optionsText: 'name', selectedOptions: selectedChecks">
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label for="check_filter">Filter Selection</label>
-                        <input type="text" id="check_filter" class="form-control">
+                        <input type="text" id="check_filter" class="form-control" data-bind="value: filter, valueUpdate: 'afterkeydown'">
                     </div>
 
                     <div class="form-group">
@@ -138,12 +138,22 @@
                     me.report = ko.observableArray();
 
                     me.checks = ko.observableArray();
+                    me.filter = ko.observable();
+                    me.visibleChecks = ko.computed(function() {
+                        if (me.filter()) {
+                            var pattern = new RegExp(me.filter(), "i");
+                            return ko.utils.arrayFilter(me.checks(), function(item) {
+                                return pattern.test(item.name());
+                            })
+                        }
+                        return me.checks();
+                    });
                     me.selectedChecks = ko.observableArray();
                     me.smartSelectedChecks = ko.computed(function() {
                         if (me.selectedChecks().length > 0) {
                             return me.selectedChecks();
                         }
-                        return me.checks();
+                        return me.visibleChecks();
                     });
 
                     me.startDate = ko.observable();

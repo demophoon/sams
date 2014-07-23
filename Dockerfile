@@ -21,10 +21,11 @@ WORKDIR /opt/sams/src/
 
 # We will run with `install` since we will just rebuild the
 # container after we update the codebase anyways
-
 RUN /opt/sams/bin/python setup.py install
 
+# Initialize Database Model
 RUN /opt/sams/bin/initialize_sams_db dev.ini
 
+EXPOSE 6544
 ENTRYPOINT ["/opt/sams/bin/pserve"]
 CMD ["dev.ini"]

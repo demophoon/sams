@@ -90,14 +90,13 @@ class ApiViews(RequestHandler):
     def report(self):
         start = datetime.utcfromtimestamp(float(self.request.POST.get('from')))
         end = datetime.utcfromtimestamp(float(self.request.POST.get('to')))
-        checks = self.request.POST.getall('check_ids')
+        checks = self.request.POST.getall('check_ids[]')
         outages = DBSession.query(Outage).join(Check).filter(
             Outage.between(start, end)
         )
         if checks:
             outages = outages.filter(Check.id.in_(checks))
         outages = outages.all()
-        print outages
         grouped_outages = {x.check_id: [] for x in outages}
         for outage in outages:
             grouped_outages[outage.check_id].append({
@@ -113,12 +112,6 @@ class ApiViews(RequestHandler):
                 ),
             })
         return grouped_outages
-        return [{
-            'from': timegm(outage.start.utctimetuple()),
-            'to': timegm(outage.end.utctimetuple()),
-            'status': outage.status,
-            'check_id': outage.check.id,
-        } for outage in outages]
 
     @view_config(route_name='api_workers', renderer='json')
     def worker_info(request):

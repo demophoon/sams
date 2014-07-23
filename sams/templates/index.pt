@@ -20,10 +20,10 @@
                     <p>See the most up to date information of the state of your environment on a page that is formatted for the big screen.</p>
                     <p><a class="btn btn-default" href="/sams" role="button">Go To SAMS &raquo;</a></p>
                 </div>
-                <div class="col-md-4 text-muted">
+                <div class="col-md-4">
                     <h2>Reporting</h2>
                     <p>Run reports on data that has been collected right out of Pingdom</p>
-                    <p><a class="btn btn-default disabled" href="#" role="button">Coming Soon</a></p>
+                    <p><a class="btn btn-default" href="/reporting" role="button">Go To Reporting &raquo;</a></p>
                 </div>
                 <div class="col-md-4 text-muted">
                     <h2>Pausing and Unpausing</h2>
