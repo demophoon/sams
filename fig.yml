@@ -1,10 +1,4 @@
 web:
     build: .
     ports:
-        - "6543:6544"
-    links:
-        - db
-    environment:
-        PINGDOM_USERNAME: sample
-        PINGDOM_PASSWORD: sample
-        PINGDOM_API: sample
+        - "6543:6543"

@@ -25,7 +25,7 @@ requires = [
     'fig',
 
     # For Postgres Connections
-    'psycopg2',
+    #'psycopg2',
 ]
 
 setup(
