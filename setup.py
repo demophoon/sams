@@ -22,6 +22,10 @@ requires = [
     'gevent-websocket==0.3.6',
     'pyramid_beaker',
     'pyramid_sockjs',
+    'fig',
+
+    # For Postgres Connections
+    'psycopg2',
 ]
 
 setup(

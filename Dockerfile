@@ -24,8 +24,8 @@ WORKDIR /opt/sams/src/
 RUN /opt/sams/bin/python setup.py install
 
 # Initialize Database Model
-RUN /opt/sams/bin/initialize_sams_db dev.ini
+RUN /opt/sams/bin/initialize_sams_db production.ini
 
-EXPOSE 6544
+EXPOSE 6543
 ENTRYPOINT ["/opt/sams/bin/pserve"]
-CMD ["dev.ini"]
+CMD ["production.ini"]

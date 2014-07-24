@@ -2,3 +2,5 @@
 *.pyc
 *.sqlite
 *dev.ini
+*production.ini
+*development.ini
