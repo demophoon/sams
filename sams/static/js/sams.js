@@ -59,9 +59,17 @@ var SamsViewModel = function() {
     me.last_update = 0;
     me.getChecks = function() {
         if (new Date() - me.last_update < 15000) { return; }
+        check_api_url = ''; 
+        console.log(window.location.href.substring(window.location.href.lastIndexOf('/')));
+        if (window.location.href.substring(window.location.href.lastIndexOf('/')) != "/sams"){
+            check_api_url = '/api/1.0/sams' + window.location.href.substring(window.location.href.lastIndexOf('/'));
+        }
+        else{
+            check_api_url = '/api/1.0/sams';
+        }
         me.last_update = new Date() * 1;
         $.ajax({
-            url: '/api/1.0/sams',
+            url: check_api_url,
             method: 'GET',
             success: function(data) {
                 me.checks(ko.utils.arrayMap(data, function(item) {
