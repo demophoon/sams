@@ -98,7 +98,6 @@ class ApiViews(RequestHandler):
             sf = self.request.matchdict['sams_filter']
             for x in checks:
                 if bu.upper() in x.name:
-                    print x.name
                     filtered_checks.append(x)
             return [{
                 'id': check.id,
@@ -114,7 +113,7 @@ class ApiViews(RequestHandler):
                     'hostname': check.hostname,
                     'status': check.status,
                     'created': check.created,
-            } for check in pchecks]
+            } for check in checks]
 
     @view_config(route_name='api_report')
     def report(self):
