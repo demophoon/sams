@@ -8,7 +8,7 @@
 FROM ubuntu:14.04
 MAINTAINER Britt Gresham <brittcgresham@gmail.com>
 
-RUN apt-get update
+RUN apt-get update --fix-missing
 RUN apt-get install git python python-dev python-pip -y
 RUN pip install virtualenv
 

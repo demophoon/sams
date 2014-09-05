@@ -5,7 +5,6 @@ from pyramid.view import view_config, view_defaults
 from pyramid.renderers import get_renderer
 
 from sams import version
-from .assets import pingdom as Pingdom
 from .models import (
     DBSession,
     Check,
@@ -77,7 +76,7 @@ class ApiViews(RequestHandler):
 
     @view_config(route_name='api_sams')
     def sams(self):
-        checks = Pingdom.getChecks()
+        checks = []
         return [{
             'id': check.id,
             'name': check.name,
@@ -113,26 +112,8 @@ class ApiViews(RequestHandler):
             })
         return grouped_outages
 
-    @view_config(route_name='api_workers', renderer='json')
-    def worker_info(request):
-        return {
-            "pingdom_worker": {
-                "last_update": timegm(Pingdom.workers["Pingdom Worker"].last_update.utctimetuple()),
-                "sleep_time": Pingdom.workers["Pingdom Worker"].sleep_time,
-            },
-            "reporting_worker": {
-                "state": Pingdom.workers["Reporting Worker"].state,
-                "percent": Pingdom.workers["Reporting Worker"].percent,
-                "percent_rate": Pingdom.workers["Reporting Worker"].percent_rate,
-                "current_check": Pingdom.workers["Reporting Worker"].current_check,
-                "last_sleep": timegm(Pingdom.workers["Reporting Worker"].last_sleep.utctimetuple()),
-                "sleep_time": Pingdom.workers["Reporting Worker"].sleep_time,
-            }
-        }
-
 
 def includeme(config):
-    config.include('sams.assets.pingdom')
 
     # Web Views
     config.add_route('home', '/')
@@ -142,6 +123,5 @@ def includeme(config):
 
     # Api Views
     config.add_route('api_sams', '/api/1.0/sams')
-    config.add_route('api_workers', '/api/1.0/workers')
     config.add_route('api_checks', '/api/1.0/checks')
     config.add_route('api_report', '/api/1.0/report')
