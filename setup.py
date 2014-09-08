@@ -23,14 +23,15 @@ requires = [
     'pyramid_beaker',
     'pyramid_sockjs',
     'fig',
+    'pyyaml',
 
     # For Postgres Connections
-    #'psycopg2',
+    # 'psycopg2',
 ]
 
 setup(
     name='sams',
-    version='0.0',
+    version='0.1',
     description='sams',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[

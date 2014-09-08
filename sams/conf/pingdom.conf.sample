@@ -1,0 +1,11 @@
+monitors:
+    Main Pingdom Monitor:
+        adapter: pingdom
+        username: username
+        password: password
+        apikey:  api_token
+    Second Pingdom Monitor:
+        adapter: pingdom
+        username: username-2
+        password: password-2
+        apikey:  app-key-2

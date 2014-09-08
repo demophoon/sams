@@ -5,3 +5,5 @@
 *production.ini
 *development.ini
 .ropeproject
+*.conf
+!*.sample

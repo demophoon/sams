@@ -8,7 +8,7 @@ from sams import version
 from .models import (
     DBSession,
     Check,
-    Outage,
+    History,
 )
 
 
@@ -65,6 +65,9 @@ class ApiViews(RequestHandler):
     def checks(self):
         checks = DBSession.query(Check).all()
         return [{
+            'guid': x.guid,
+            'adapter': x.adapter,
+            'monitor': x.monitor,
             'id': x.id,
             'name': x.name,
             'resolution': x.resolution,
@@ -76,13 +79,13 @@ class ApiViews(RequestHandler):
 
     @view_config(route_name='api_sams')
     def sams(self):
-        checks = []
+        checks = DBSession.query(Check).all()
         return [{
             'id': check.id,
             'name': check.name,
             'hostname': check.hostname,
             'status': check.status,
-            'created': check.created,
+            'created_at': timegm(check.created_at.utctimetuple()),
         } for check in checks]
 
     @view_config(route_name='api_report')
@@ -90,8 +93,8 @@ class ApiViews(RequestHandler):
         start = datetime.utcfromtimestamp(float(self.request.POST.get('from')))
         end = datetime.utcfromtimestamp(float(self.request.POST.get('to')))
         checks = self.request.POST.getall('check_ids[]')
-        outages = DBSession.query(Outage).join(Check).filter(
-            Outage.between(start, end)
+        outages = DBSession.query(History).join(Check).filter(
+            History.between(start, end)
         )
         if checks:
             outages = outages.filter(Check.id.in_(checks))
