@@ -66,8 +66,11 @@ class ApiViews(RequestHandler):
     @view_config(route_name='api_checks')
     @view_config(route_name='api_checks_filtered')
     def checks(self):
-        if self.request.matchdict.has_key('sams_filter'):
-            query_bu = '%' + self.request.matchdict['sams_filter'] + '%'
+        qstring = ''
+        qstring = self.request.params['filter']
+        print qstring
+        if qstring != '':
+            query_bu = '%' + qstring  + '%'
             checks = DBSession.query(Check).filter(Check.name.like(query_bu))
             return [{
                 'id': x.id,
@@ -91,13 +94,19 @@ class ApiViews(RequestHandler):
             } for x in checks]
 
     @view_config(route_name='api_sams')
+    @view_config(route_name='api_sams_filtered')
     def sams(self):
         checks = Pingdom.getChecks()
         filtered_checks = []
-        if self.request.matchdict.has_key('sams_filter'):
-            sf = self.request.matchdict['sams_filter']
+        qstring = ''
+        try:
+            qstring = self.request.params['filter']
+        except:
+            qstring = ''
+        print qstring
+        if qstring != '':
             for x in checks:
-                if bu.upper() in x.name:
+                if qstring.upper() in x.name:
                     filtered_checks.append(x)
             return [{
                 'id': check.id,
@@ -105,7 +114,7 @@ class ApiViews(RequestHandler):
                 'hostname': check.hostname,
                 'status': check.status,
                 'created': check.created,
-            } for check in checks]
+            } for check in filtered_checks]
         else:
             return [{
                     'id': check.id,
@@ -172,8 +181,8 @@ def includeme(config):
 
     # Api Views
     config.add_route('api_sams', '/api/1.0/sams')
-    config.add_route('api_sams_filtered', '/api/1.0/sams/{sams_filter}')
+    config.add_route('api_sams_filtered', '/api/1.0/sams?filter={sams_filter}')
     config.add_route('api_workers', '/api/1.0/workers')
     config.add_route('api_checks', '/api/1.0/checks')
-    config.add_route('api_checks_filtered', '/api/1.0/checks/{sams_filter}')
+    config.add_route('api_checks_filtered', '/api/1.0/checks?filter={sams_filter}')
     config.add_route('api_report', '/api/1.0/report')

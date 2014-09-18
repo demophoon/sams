@@ -6,6 +6,17 @@ var Check = function(id, name, hostname, status) {
     me.status = ko.observable(status);
 }
 
+var query_string_vals = [], hash;
+    var q = document.URL.split('?')[1];
+    if(q != undefined){
+        q = q.split('&');
+        for(var i = 0; i < q.length; i++){
+            hash = q[i].split('=');
+            vars.push(hash[1]);
+            vars[hash[0]] = hash[1];
+        }
+}
+
 var SamsViewModel = function() {
     var me = this;
     me.checks = ko.observableArray();
@@ -59,13 +70,10 @@ var SamsViewModel = function() {
     me.last_update = 0;
     me.getChecks = function() {
         if (new Date() - me.last_update < 15000) { return; }
-        check_api_url = ''; 
-        console.log(window.location.href.substring(window.location.href.lastIndexOf('/')));
-        if (window.location.href.substring(window.location.href.lastIndexOf('/')) != "/sams"){
-            check_api_url = '/api/1.0/sams' + window.location.href.substring(window.location.href.lastIndexOf('/'));
-        }
-        else{
-            check_api_url = '/api/1.0/sams';
+        check_api_url = '/api/1.0/sams';
+        
+        if(query_string_vals['filter'] != null){
+            check_api_url = '/api/1.0/sams/' + query_string_vals['filter']
         }
         me.last_update = new Date() * 1;
         $.ajax({
