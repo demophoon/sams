@@ -67,8 +67,12 @@ class ApiViews(RequestHandler):
     @view_config(route_name='api_checks_filtered')
     def checks(self):
         qstring = ''
-        qstring = self.request.params['filter']
-        print qstring
+        try:
+            qstring = self.request.params['filter']
+        except:
+            qstring = ''
+
+        qstring = ''
         if qstring != '':
             query_bu = '%' + qstring  + '%'
             checks = DBSession.query(Check).filter(Check.name.like(query_bu))
@@ -103,7 +107,6 @@ class ApiViews(RequestHandler):
             qstring = self.request.params['filter']
         except:
             qstring = ''
-        print qstring
         if qstring != '':
             for x in checks:
                 if qstring.upper() in x.name:
