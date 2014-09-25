@@ -60,11 +60,11 @@ var SamsViewModel = function() {
     me.getChecks = function() {
         if (new Date() - me.last_update < 15000) { return; }
         check_api_url = '/api/1.0/sams';
-        
+
         var query = window.location.search.slice(1);
-        
+
         if(query != null){
-            check_api_url = '/api/1.0/sams?' + query
+            check_api_url += '?' + query
         }
         me.last_update = new Date() * 1;
         $.ajax({

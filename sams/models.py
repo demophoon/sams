@@ -49,8 +49,8 @@ class Outage(Base):
     def between(self, start, end):
         return or_(
             and_(Outage.start >= start, Outage.start <= end),
-            and_(Outage.end >= start, Outage.end <= end)
-            , and_(Outage.start <= start, Outage.end >= end)
+            and_(Outage.end >= start, Outage.end <= end),
+            and_(Outage.start <= start, Outage.end >= end)
         )
 
     @hybrid_property
