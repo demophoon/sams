@@ -178,7 +178,7 @@ def includeme(config):
     # Web Views
     config.add_route('home', '/')
     config.add_route('sams', '/sams')
-    config.add_route('sams_filtered', '/sams/{sams_filter}')
+    config.add_route('sams_filtered', '/sams?filter={sams_filter}')
     config.add_route('reporting', '/reporting')
     config.add_route('info', '/info')
 
