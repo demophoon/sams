@@ -28,6 +28,7 @@ def home(request):
 
 
 @view_config(route_name='sams', renderer='templates/sams.pt')
+@view_config(route_name='sams_filtered', renderer='templates/sams.pt')
 def sams(request):
     return {}
 
@@ -63,28 +64,68 @@ class ApiViews(RequestHandler):
         RequestHandler.__init__(self, request)
 
     @view_config(route_name='api_checks')
+    @view_config(route_name='api_checks_filtered')
     def checks(self):
-        checks = DBSession.query(Check).all()
-        return [{
-            'id': x.id,
-            'name': x.name,
-            'resolution': x.resolution,
-            'type': x.type,
-            'hostname': x.hostname,
-            'updated_at': timegm(x.updated_at.utctimetuple()),
-            'created_at': timegm(x.created_at.utctimetuple()),
-        } for x in checks]
+        qstring = ''
+        try:
+            qstring = self.request.params['filter']
+        except:
+            qstring = ''
+
+        qstring = ''
+        if qstring != '':
+            query_bu = '%' + qstring  + '%'
+            checks = DBSession.query(Check).filter(Check.name.like(query_bu))
+            return [{
+                'id': x.id,
+                'name': x.name,
+                'resolution': x.resolution,
+                'type': x.type,
+                'hostname': x.hostname,
+                'updated_at': timegm(x.updated_at.utctimetuple()),
+                'created_at': timegm(x.created_at.utctimetuple()),
+            } for x in checks]
+        else:
+            checks = DBSession.query(Check)
+            return [{
+                'id': x.id,
+                'name': x.name,
+                'resolution': x.resolution,
+                'type': x.type,
+                'hostname': x.hostname,
+                'updated_at': timegm(x.updated_at.utctimetuple()),
+                'created_at': timegm(x.created_at.utctimetuple()),
+            } for x in checks]
 
     @view_config(route_name='api_sams')
+    @view_config(route_name='api_sams_filtered')
     def sams(self):
         checks = Pingdom.getChecks()
-        return [{
-            'id': check.id,
-            'name': check.name,
-            'hostname': check.hostname,
-            'status': check.status,
-            'created': check.created,
-        } for check in checks]
+        filtered_checks = []
+        qstring = ''
+        try:
+            qstring = self.request.params['filter']
+        except:
+            qstring = ''
+        if qstring != '':
+            for x in checks:
+                if qstring.upper() in x.name:
+                    filtered_checks.append(x)
+            return [{
+                'id': check.id,
+                'name': check.name,
+                'hostname': check.hostname,
+                'status': check.status,
+                'created': check.created,
+            } for check in filtered_checks]
+        else:
+            return [{
+                    'id': check.id,
+                    'name': check.name,
+                    'hostname': check.hostname,
+                    'status': check.status,
+                    'created': check.created,
+            } for check in checks]
 
     @view_config(route_name='api_report')
     def report(self):
@@ -137,11 +178,14 @@ def includeme(config):
     # Web Views
     config.add_route('home', '/')
     config.add_route('sams', '/sams')
+    config.add_route('sams_filtered', '/sams?filter={sams_filter}')
     config.add_route('reporting', '/reporting')
     config.add_route('info', '/info')
 
     # Api Views
     config.add_route('api_sams', '/api/1.0/sams')
+    config.add_route('api_sams_filtered', '/api/1.0/sams?filter={sams_filter}')
     config.add_route('api_workers', '/api/1.0/workers')
     config.add_route('api_checks', '/api/1.0/checks')
+    config.add_route('api_checks_filtered', '/api/1.0/checks?filter={sams_filter}')
     config.add_route('api_report', '/api/1.0/report')
