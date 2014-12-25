@@ -211,8 +211,9 @@
                         me.getChecks();
                     }
                     me.getChecks = function() {
+                        check_api_url = '/api/1.0/checks';
                         $.ajax({
-                            url: '/api/1.0/checks',
+                            url: check_api_url,
                             success: function(data) {
                                 me.checks(ko.utils.arrayMap(data, function(item) {
                                     var check = new CheckModel();

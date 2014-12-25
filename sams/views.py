@@ -64,7 +64,12 @@ class ApiViews(RequestHandler):
 
     @view_config(route_name='api_checks')
     def checks(self):
-        checks = DBSession.query(Check).all()
+        qstring = self.request.params.get('filter')
+        if qstring:
+            query_bu = '%' + qstring + '%'
+            checks = DBSession.query(Check).filter(Check.name.like(query_bu))
+        else:
+            checks = DBSession.query(Check)
         return [{
             'id': x.id,
             'name': x.name,
@@ -78,6 +83,9 @@ class ApiViews(RequestHandler):
     @view_config(route_name='api_sams')
     def sams(self):
         checks = Pingdom.getChecks()
+        qstring = self.request.params.get('filter')
+        if qstring:
+            checks = [x for x in checks if qstring.lower() in x.name.lower()]
         return [{
             'id': check.id,
             'name': check.name,

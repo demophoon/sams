@@ -59,9 +59,16 @@ var SamsViewModel = function() {
     me.last_update = 0;
     me.getChecks = function() {
         if (new Date() - me.last_update < 15000) { return; }
+        check_api_url = '/api/1.0/sams';
+
+        var query = window.location.search.slice(1);
+
+        if(query != null){
+            check_api_url += '?' + query
+        }
         me.last_update = new Date() * 1;
         $.ajax({
-            url: '/api/1.0/sams',
+            url: check_api_url,
             method: 'GET',
             success: function(data) {
                 me.checks(ko.utils.arrayMap(data, function(item) {
