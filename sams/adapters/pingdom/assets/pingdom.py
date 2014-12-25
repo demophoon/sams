@@ -24,12 +24,30 @@ Pingdom = None
 workers = {}
 
 
-@cache_region("1m")
-def getChecks():
-    """
-    A cached function of Pingdom.getChecks to not overload the api
-    """
-    return Pingdom.getChecks()
+class PingdomWorker(Greenlet):
+
+    def __init__(self, **kwargs):
+        if not all([x in kwargs for x in [
+            'username', 'password', 'api_key',
+        ]]):
+            raise ValueError('Missing required arguments')
+        print kwargs
+        self.workers = {}
+        self.Pingdom = pingdomlib.Pingdom(
+            kwargs["username"],
+            kwargs["password"],
+            kwargs["api_key"],
+        )
+        self.workers['Pingdom Worker'] = _getChecksWorker.spawn(self)
+        self.workers['Report Worker'] = _getOutageInformationWorker.spawn(self)
+
+
+    @cache_region("1m")
+    def get_checks(self):
+        """
+        A cached function of Pingdom.getChecks to not overload the api
+        """
+        return self.Pingdom.getChecks()
 
 
 def _notify_clients(message):
@@ -57,16 +75,17 @@ class _getChecksWorker(Greenlet):
     instead of all the clients coming to us for status updates every minute.
     """
 
-    def __init__(self, sleep_time=15):
+    def __init__(self, pingdom, sleep_time=15):
+        self.pingdom = pingdom
         self.sleep_time = sleep_time
         self.last_update = datetime.utcnow()
-        self.previous_state = {x.id: x for x in Pingdom.getChecks()}
+        self.previous_state = {x.id: x for x in self.pingdom.get_checks()}
         Greenlet.__init__(self)
 
     def fetch_information(self):
         with transaction.manager:
             logging.info("Updating check information")
-            api_checks = getChecks()
+            api_checks = self.pingdom.get_checks()
 
             status_changes = {}
             for check in api_checks:
@@ -124,7 +143,8 @@ class _getOutageInformationWorker(Greenlet):
     Allows for speedy reports.
     """
 
-    def __init__(self, sleep_time=900):
+    def __init__(self, pingdom, sleep_time=900):
+        self.pingdom = pingdom
         self.sleep_time = sleep_time
         self.state = "initialization"
         self.percent = 0.0
@@ -136,7 +156,7 @@ class _getOutageInformationWorker(Greenlet):
 
     def fetch_information(self):
         with transaction.manager:
-            api_checks = {x.id: x for x in getChecks()}
+            api_checks = {x.id: x for x in self.pingdom.get_checks()}
             checks = DBSession.query(Check).all()
             total_checks = len(checks)
             for index, check in enumerate(checks):
@@ -210,13 +230,7 @@ def includeme(config):
     """
     Pyramid Bootstrap
     """
+    return
     global Pingdom
     global workers
     settings = config.get_settings()
-    Pingdom = pingdomlib.Pingdom(
-        settings.get("pingdom_username"),
-        settings.get("pingdom_password"),
-        settings.get("pingdom_key"),
-    )
-    workers['Pingdom Worker'] = _getChecksWorker.spawn()
-    workers['Reporting Worker'] = _getOutageInformationWorker.spawn()

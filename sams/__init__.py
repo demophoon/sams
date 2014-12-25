@@ -1,4 +1,5 @@
 import os
+import pkgutil
 
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
@@ -29,24 +30,29 @@ def main(global_config, **settings):
 
     config.add_sockjs_route(prefix='/api/1.0/sams/ws', session=ClientNotifier)
 
-    base_dir = './sams/adapters'
-    adapter_paths = []
-    for adapter in os.listdir(base_dir):
-        if os.path.isdir(base_dir + os.sep + adapter):
-            module_dir = base_dir + os.sep + adapter
-            if os.path.exists(module_dir + os.sep + '__init__.py'):
-                adapter_paths.append(adapter)
-    adapters = {}
-    for adapter in adapter_paths:
-        adapters[adapter] = __import__(
-            "sams.adapters.%s" % adapter, fromlist=["*"]
-        )
-        try:
-            adapters[adapter].entrypoint(config)
-        except Exception as e:
-            print e
-
-    print adapters
-
     config.scan()
+
+    adapter_path = os.path.join(os.path.dirname(__file__), 'adapters')
+    monitors = []
+    adapters = {}
+
+    for loader, mod_name, ispkg in pkgutil.iter_modules(path=[adapter_path]):
+        if ispkg:
+            adapters[mod_name] = __import__(
+                'sams.adapters.%s' % (mod_name), fromlist=['*']
+            )
+            try:
+                adapters[mod_name].includeme(config)
+            except AttributeError:
+                # No initial setup hook
+                pass
+    print adapters
+    from conf import pingdom
+    for monitor in pingdom.monitors:
+        adapter = adapters.get(monitor['adapter'])
+        if not adapter:
+            raise Exception("Adapter '%s' is not implemented" % (
+                monitor['adapter'])
+            )
+        monitors.append(adapter.configure_monitor(**monitor))
     return config.make_wsgi_app()

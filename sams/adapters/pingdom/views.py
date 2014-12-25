@@ -25,14 +25,12 @@ class ApiViews(RequestHandler):
                 "last_update": timegm(Pingdom.workers["Pingdom Worker"].last_update.utctimetuple()),
                 "sleep_time": Pingdom.workers["Pingdom Worker"].sleep_time,
             },
-            "reporting_worker": {
-                "state": Pingdom.workers["Reporting Worker"].state,
-                "percent": Pingdom.workers["Reporting Worker"].percent,
-                "percent_rate": Pingdom.workers["Reporting Worker"].percent_rate,
-                "current_check": Pingdom.workers["Reporting Worker"].current_check,
-                "last_sleep": timegm(Pingdom.workers["Reporting Worker"].last_sleep.utctimetuple()),
-                "sleep_time": Pingdom.workers["Reporting Worker"].sleep_time,
+            "report_worker": {
+                "state": Pingdom.workers["Report Worker"].state,
+                "percent": Pingdom.workers["Report Worker"].percent,
+                "percent_rate": Pingdom.workers["Report Worker"].percent_rate,
+                "current_check": Pingdom.workers["Report Worker"].current_check,
+                "last_sleep": timegm(Pingdom.workers["Report Worker"].last_sleep.utctimetuple()),
+                "sleep_time": Pingdom.workers["Report Worker"].sleep_time,
             }
         }
-
-
