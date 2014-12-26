@@ -41,6 +41,8 @@ class PingdomWorker(Greenlet):
         self.workers['Pingdom Worker'] = _getChecksWorker.spawn(self)
         self.workers['Report Worker'] = _getOutageInformationWorker.spawn(self)
 
+    def get_list(self):
+        return self.get_checks()
 
     @cache_region("1m")
     def get_checks(self):

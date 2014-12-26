@@ -4,7 +4,7 @@ from datetime import datetime
 from pyramid.view import view_config, view_defaults
 from pyramid.renderers import get_renderer
 
-from sams import version
+from sams import version, monitors
 from .models import (
     DBSession,
     Check,
@@ -77,12 +77,12 @@ class ApiViews(RequestHandler):
     @view_config(route_name='api_sams')
     def sams(self):
         checks = []
+        for monitor in monitors:
+            checks += monitors[monitor].get_list()
         return [{
             'id': check.id,
             'name': check.name,
-            'hostname': check.hostname,
             'status': check.status,
-            'created': check.created,
         } for check in checks]
 
     @view_config(route_name='api_report')

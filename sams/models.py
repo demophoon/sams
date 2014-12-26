@@ -23,9 +23,16 @@ DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
 
+class Monitor(Base):
+    __tablename__ = 'monitors'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, primary_key=True)
+
+
 class Check(Base):
     __tablename__ = 'checks'
     id = Column(Integer, primary_key=True)
+    monitor_id = Column(Integer, ForeignKey('monitors.id'))
     name = Column(Text)
     type = Column(Text)
     hostname = Column(Text)
@@ -33,6 +40,7 @@ class Check(Base):
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
 
+    monitor = relationship("Monitor", backref="checks")
     outages = relationship("Outage", backref="check")
 
 

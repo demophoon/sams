@@ -1,5 +1,6 @@
 import os
 import pkgutil
+import ConfigParser
 
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
@@ -13,10 +14,14 @@ from .assets.websocket import ClientNotifier
 
 version = (0, 0, '0 alpha')
 
+# Monitors
+monitors = {}
+
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
+    global monitors
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
@@ -33,7 +38,6 @@ def main(global_config, **settings):
     config.scan()
 
     adapter_path = os.path.join(os.path.dirname(__file__), 'adapters')
-    monitors = []
     adapters = {}
 
     for loader, mod_name, ispkg in pkgutil.iter_modules(path=[adapter_path]):
@@ -47,12 +51,24 @@ def main(global_config, **settings):
                 # No initial setup hook
                 pass
     print adapters
-    from conf import pingdom
-    for monitor in pingdom.monitors:
-        adapter = adapters.get(monitor['adapter'])
+
+    # Parse Config Files
+    config_load_path = [
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)), 'conf/sams.conf'),
+        os.path.expanduser('~/.sams.conf'),
+    ]
+    monitor_config = ConfigParser.ConfigParser()
+    print config_load_path
+    monitor_config.read(config_load_path)
+    for monitor in monitor_config.sections():
+        adapter = adapters.get(monitor_config.get(monitor, 'adapter'))
         if not adapter:
             raise Exception("Adapter '%s' is not implemented" % (
-                monitor['adapter'])
+                monitor_config.get(monitor, 'adapter'))
             )
-        monitors.append(adapter.configure_monitor(**monitor))
+        monitor_args = {k: v for k, v in monitor_config.items(monitor)}
+        monitors[monitor] = adapter.configure_monitor(**monitor_args)
+        monitors[monitor].name = monitor
+
     return config.make_wsgi_app()
