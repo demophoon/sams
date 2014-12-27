@@ -83,7 +83,7 @@ def get_monitor(fn):
     def new_function(*args, **kwargs):
         context, request = args
         print request.GET
-        monitor = request.params.get('monitor')
+        monitor = request.matchdict.get('monitor')
         if monitor:
             request.monitor = monitors.get(monitor)
         else:

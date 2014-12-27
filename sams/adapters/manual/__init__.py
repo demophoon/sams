@@ -22,7 +22,7 @@ def api_manual_status(context, request):
 
 
 def includeme(config):
-    config.add_route('api_manual_status', '/api/1.0/manual_status')
+    config.add_route('api_manual_status', '/monitor/{monitor}/manual_status')
 
 
 class ManualMonitor(common.SamsAdapter):
