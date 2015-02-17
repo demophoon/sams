@@ -1,6 +1,5 @@
 import gevent
 from gevent import monkey, Greenlet
-monkey.patch_all()
 
 import logging
 import calendar
@@ -18,6 +17,8 @@ from sams.models import (
     Check,
     Outage,
 )
+
+monkey.patch_all()
 
 logger = logging.getLogger(__name__)
 Pingdom = None
@@ -235,4 +236,4 @@ def includeme(config):
     return
     global Pingdom
     global workers
-    settings = config.get_settings()
+    config.get_settings()

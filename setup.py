@@ -24,8 +24,8 @@ requires = [
     'pyramid_sockjs',
     'fig',
 
-    # For Postgres Connections
-    #'psycopg2',
+    #  For Postgres Connections
+    # 'psycopg2',
 ]
 
 setup(

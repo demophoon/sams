@@ -28,6 +28,7 @@ def includeme(config):
 class ManualMonitor(common.SamsAdapter):
     pass
 
+
 def configure_monitor(**kwargs):
     new_monitor = ManualMonitor()
     checks = kwargs.get('checks', '').strip().split("\n")

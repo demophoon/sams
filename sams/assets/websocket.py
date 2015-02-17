@@ -1,5 +1,3 @@
-import json
-
 from pyramid_sockjs.session import Session
 
 
